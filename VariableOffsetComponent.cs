@@ -4,7 +4,7 @@ using Grasshopper.Kernel;
 using Rhino.Geometry;
 using Clipper2Lib;
 using VariableOffset.Utilities;
-using Rhino;
+using System.Linq;
 using System.Drawing;
 
 namespace VariableOffsetComponent
@@ -72,6 +72,11 @@ namespace VariableOffsetComponent
             DA.SetData(0, outputCurve);
         }
 
+        /// <summary>
+        /// Converts a Paths64 object to a Rhino PolylineCurve.
+        /// </summary>
+        /// <param name="paths">The input Paths64 object.</param>
+        /// <returns>A PolylineCurve representing the input paths.</returns>
         private static PolylineCurve Paths64ToRhinoCurves(Paths64 paths)
         {
             const double scale = 0.01; // 1/100
@@ -94,6 +99,12 @@ namespace VariableOffsetComponent
             return plCurve;
         }
 
+        /// <summary>
+        /// Converts a Rhino curve to a Path64 object.
+        /// </summary>
+        /// <param name="curve">The input Rhino curve.</param>
+        /// <param name="tolerance">The tolerance for converting the curve to a polyline.</param>
+        /// <returns>A Path64 object representing the polyline approximation of the input curve.</returns>
         private static Path64 RhinoCurveToPath64(Curve curve, double tolerance = 0.1)
         {
             var polyline = curve.ToPolyline(tolerance, tolerance, 0, 0).ToPolyline();
@@ -107,13 +118,22 @@ namespace VariableOffsetComponent
             return path;
         }
 
+        /// <summary>
+        /// Provides an Icon for every component that will be visible in the User Interface.
+        /// Icons need to be 24x24 pixels. Icons must be embedded
+        /// You can add image files to your project resources
+        /// </summary>
         protected override Bitmap Icon
         {
             get
             {
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var stream = assembly.GetManifestResourceStream("vo.png");
-                return new Bitmap(stream);
+                {
+                    var resourceName = assembly.GetManifestResourceNames().Single(n => n.EndsWith("vo.png"));
+                    var stream = assembly.GetManifestResourceStream(resourceName);
+                    if (stream != null) return new System.Drawing.Bitmap(stream);
+                }
+                return null;
             }
         }
 

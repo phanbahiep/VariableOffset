@@ -8,22 +8,39 @@ using System.Threading.Tasks;
 
 namespace VariableOffset.Utilities
 {
-    // Create this in a new file, separate from the original library
+    /// <summary>
+    /// Provides functionality to create variable offset paths using Clipper library.
+    /// </summary>
     public class VariableOffsetClipper
     {
         private readonly Dictionary<(int pathIndex, int edgeIndex), double> _edgeOffsets;
         private double _defaultDelta = 1.0;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VariableOffsetClipper"/> class.
+        /// </summary>
         public VariableOffsetClipper()
         {
             _edgeOffsets = new Dictionary<(int pathIndex, int edgeIndex), double>();
         }
 
+        /// <summary>
+        /// Sets the offset for a specific edge in a path.
+        /// </summary>
+        /// <param name="pathIndex">The index of the path.</param>
+        /// <param name="edgeIndex">The index of the edge within the path.</param>
+        /// <param name="offset">The offset value to set.</param>
         public void SetEdgeOffset(int pathIndex, int edgeIndex, double offset)
         {
             _edgeOffsets[(pathIndex, edgeIndex)] = offset;
         }
 
+        /// <summary>
+        /// Executes the offset operation on the provided paths.
+        /// </summary>
+        /// <param name="paths">The input paths to offset.</param>
+        /// <param name="defaultDelta">The default offset value to use if no specific offset is set for an edge.</param>
+        /// <param name="solution">The output paths after applying the offset.</param>
         public void Execute(Paths64 paths, double defaultDelta, Paths64 solution)
         {
             foreach (Path64 path in paths)
@@ -36,7 +53,6 @@ namespace VariableOffset.Utilities
                 for (int i = 0; i < count - 1; i++)
                 {
                     double offset = _edgeOffsets.TryGetValue((0, i), out double customDelta) ? customDelta : defaultDelta;
-                    
 
                     var p1 = path[i];
                     var p2 = path[i + 1];
@@ -61,8 +77,6 @@ namespace VariableOffset.Utilities
                     offsetLines.Add((offsetP1, offsetP2));
                 }
 
-               
-
                 // Find intersections
                 for (int i = 0; i < offsetLines.Count; i++)
                 {
@@ -77,6 +91,14 @@ namespace VariableOffset.Utilities
             }
         }
 
+        /// <summary>
+        /// Finds the intersection point of two lines.
+        /// </summary>
+        /// <param name="p1">The first point of the first line.</param>
+        /// <param name="p2">The second point of the first line.</param>
+        /// <param name="p3">The first point of the second line.</param>
+        /// <param name="p4">The second point of the second line.</param>
+        /// <returns>The intersection point of the two lines.</returns>
         private Point64 IntersectLines(Point64 p1, Point64 p2, Point64 p3, Point64 p4)
         {
             double x1 = p1.X, y1 = p1.Y;
