@@ -23,6 +23,16 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <None Remove="Resouces\vo.png" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="Resouces\vo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  
+  <ItemGroup>
     <PackageReference Include="Clipper2" Version="1.4.0" />
     <PackageReference Include="Grasshopper" Version="8.0.23304.9001" ExcludeAssets="runtime" />
   </ItemGroup>

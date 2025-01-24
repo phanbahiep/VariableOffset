@@ -5,6 +5,7 @@ using Rhino.Geometry;
 using Clipper2Lib;
 using VariableOffset.Utilities;
 using Rhino;
+using System.Drawing;
 
 namespace VariableOffsetComponent
 {
@@ -26,53 +27,49 @@ namespace VariableOffsetComponent
 
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddCurveParameter("Curves", "C", "Closed curves to offset", GH_ParamAccess.list);
+            // Changed from list to item access for curves
+            pManager.AddCurveParameter("Curve", "C", "Closed curve to offset", GH_ParamAccess.item);
             pManager.AddNumberParameter("Edge Offsets", "D", "Offset distance per edge", GH_ParamAccess.list);
         }
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddCurveParameter("Offset Curves", "O", "Resulting offset curves", GH_ParamAccess.list);
+            pManager.AddCurveParameter("Offset Curves", "O", "Resulting offset curves", GH_ParamAccess.item);
             pManager.AddPointParameter("Points", "P", "Points", GH_ParamAccess.list);
         }
 
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            // create empty input vars
-            List<Curve> inputCurves = new List<Curve>();
+            // Modified to handle single curve input
+            Curve inputCurve = null;
             List<double> edgeOffsets = new List<double>();
 
             // Get and verify input data
-            if (!DA.GetDataList(0, inputCurves) || !DA.GetDataList(1, edgeOffsets)) return;
-            if (inputCurves.Count == 0) return;
+            if (!DA.GetData(0, ref inputCurve) || !DA.GetDataList(1, edgeOffsets)) return;
+            if (inputCurve == null) return;
             if (edgeOffsets.Count == 0) return;
 
-            // create output variable
-            var outputCurves = new List<PolylineCurve>(inputCurves.Count);
-
-            
-            for (int i = 0; i < inputCurves.Count; i++)
+            if (!inputCurve.IsClosed)
             {
-                if (!inputCurves[i].IsClosed)
-                {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input curves must be closed.");
-                    continue;
-                }
-
-                _paths.Clear();
-                _solution.Clear();
-                _paths.Add(RhinoCurveToPath64(inputCurves[i]));
-
-                for (int j = 0; j < edgeOffsets.Count; j++)
-                {
-                    _variableClipper.SetEdgeOffset(i, j, edgeOffsets[j]);
-                }
-
-                _variableClipper.Execute(_paths, 0, _solution);
-                outputCurves.Add(Paths64ToRhinoCurves(_solution));
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Input curve must be closed.");
+                return;
             }
 
-            DA.SetDataList(0, outputCurves);
+            _paths.Clear();
+            _solution.Clear();
+            _paths.Add(RhinoCurveToPath64(inputCurve));
+
+            // Apply edge offsets
+            for (int j = 0; j < edgeOffsets.Count; j++)
+            {
+                _variableClipper.SetEdgeOffset(0, j, edgeOffsets[j]);
+            }
+
+            _variableClipper.Execute(_paths, 0, _solution);
+            var outputCurve = Paths64ToRhinoCurves(_solution);
+
+            // Set single curve output
+            DA.SetData(0, outputCurve);
         }
 
         private static PolylineCurve Paths64ToRhinoCurves(Paths64 paths)
@@ -110,9 +107,17 @@ namespace VariableOffsetComponent
             return path;
         }
 
+        protected override Bitmap Icon
+        {
+            get
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var stream = assembly.GetManifestResourceStream("vo.png");
+                return new Bitmap(stream);
+            }
+        }
+
+
         public override Guid ComponentGuid => new Guid("1b67ca3a-7ba9-4511-b14e-417503459e7b");
     }
 }
-
-
-
