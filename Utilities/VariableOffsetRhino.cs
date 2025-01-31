@@ -56,12 +56,12 @@ namespace VariableOffset.Utilities
                     var p1 = path[i];
                     var p2 = path[i + 1];
 
-                    // Calculate perpendicular vector using RhinoCommon's Vector3d
+                    // Calculate perpendicular vector
                     var edge = p2 - p1;
                     var perpendicular = Vector3d.CrossProduct(edge, Vector3d.ZAxis);
                     perpendicular.Unitize();
 
-                    // Create offset line using RhinoCommon's Line
+                    // Create offset line 
                     var offsetP1 = p1 + perpendicular * offset;
                     var offsetP2 = p2 + perpendicular * offset;
                     offsetLines.Add(new Line(offsetP1, offsetP2));
